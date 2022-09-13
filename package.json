@@ -1,0 +1,25 @@
+{
+  "name": "jnote",
+  "version": "1.0.0",
+  "description": "Catatan sederhana dengan JavaScript",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "jnote"
+  },
+  "keywords": [
+    "JavaScript"
+  ],
+  "author": "Febry Billiyagi",
+  "license": "MIT",
+  "devDependencies": {
+    "tailwindcss": "^3.1.8"
+  },
+  "dependencies": {
+    "daisyui": "^2.25.0",
+    "izitoast": "^1.4.0"
+  }
+}
