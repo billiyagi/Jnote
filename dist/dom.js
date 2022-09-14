@@ -329,7 +329,7 @@ const validationInput = (...inputFormId) => {
 
 // Melacak perubahan pada editor dan melakukan injeksi pada kolom textarea
 const loadContentEditor = () => {
-    document.querySelector('iframe').contentDocument.addEventListener('keypress', function() {
+    document.querySelector('iframe').contentDocument.addEventListener('keydown', function() {
         noteContent.innerHTML = document.querySelector('iframe').contentDocument.body.outerHTML;
     })
 }
