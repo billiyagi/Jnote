@@ -1,23 +1,35 @@
 import * as Note from "./note.js";
 
-
+// Container Element
 const containerContent = document.getElementById('container');
+
+/** 
+ * Inisialisasi Tema Aplikasi
+*/
 if ( localStorage.getItem('theme') )
 {
     document.querySelector('#htmlTheme').setAttribute('data-theme', localStorage.getItem('theme'))
-} else 
-{
+} else {
     localStorage.setItem('theme', `light`);
 }
+
+
 /** 
  * Halaman: Semua catatan
 */
 const btnAllNote = document.getElementById('allNote');
 btnAllNote.addEventListener('click', function() {
-    resetActiveMenu('bg-sky-500');
-    this.classList.add('bg-sky-500', 'text-white')
-    let allNotePage = ``;
 
+    // Reset menu yang sedang aktif
+    resetActiveMenu('bg-sky-500');
+
+    // Buat menu aktif dengan menu yang sedang diakses saat ini
+    this.classList.add('bg-sky-500', 'text-white')
+
+    /** 
+     * Injeksi semua data catatan
+    */
+   let allNotePage = ``;
     if ( Note.allNote().length != 0 )
     {
         for (const note of Note.allNote() )
@@ -35,15 +47,17 @@ btnAllNote.addEventListener('click', function() {
                 </a>
             `;
         }
-    } else 
-    {
+    } else {
         allNotePage = `<h1 class="text-lg text-center">Tidak ada catatan</h1>`
     }
-
 
     containerContent.innerHTML = '<div class="grid grid-rows-1 md:grid-cols-4 gap-3" id="allNoteRow"></div>';
     document.querySelector('#allNoteRow').innerHTML = allNotePage;
 
+    /** 
+     * Aksi lihat & edit catatan
+     * ketika ada salah satu catatan yang di klik
+    */
     for ( const note of document.querySelectorAll('.note-card')) 
     {
         note.addEventListener('click', editNote);
@@ -54,9 +68,13 @@ btnAllNote.addEventListener('click', function() {
  * Halaman: Ubah & Lihat catatan
 */
 const editNote = function() {
-    resetActiveMenu('bg-sky-500');
-    const note = Note.showNote(this.getAttribute('data-id'));
 
+    // Ambil data id catatan yang telah diklik
+    const note = Note.showNote(this.getAttribute('data-id'));
+    
+    /** 
+     * Injeksi form untuk edit data catatan
+    */
     const updateNotePage = `
     <div class="mb-3">
         <input type="text" id="noteTitle" placeholder="Judul catatan" class="input input-bordered w-full" value="${note.title}"/>
@@ -71,22 +89,28 @@ const editNote = function() {
     <div class="flex justify-between">
         <div class="btn-group btn-group-horizontal">
             <button class="capitalize btn btn-primary bg-gray-400 hover:bg-gray-500 border-0 border-transparent text-lg" id="btnBack">Kembali</button>
-            <button class="capitalize btn btn-primary bg-sky-400 hover:bg-sky-500 border-0 border-transparent text-lg" id="btnEdit">Ubah catatan</button>
+            <button class="capitalize btn btn-primary bg-sky-400 hover:bg-sky-500 border-0 border-transparent text-lg" id="btnEdit">Ubah</button>
         </div>
-            <label for="modalBox" class="capitalize btn btn-primary bg-red-400 hover:bg-red-600 border-0 border-transparent text-lg">Hapus catatan</label>
+            <label for="modalBox" class="capitalize btn btn-primary bg-red-400 hover:bg-red-600 border-0 border-transparent text-lg">Hapus</label>
     </div>
     `
     containerContent.innerHTML = updateNotePage;
 
+
+    /** 
+     * Simpan data catatan yang telah di edit
+     * ketika tombol ubah di klik
+    */
     document.querySelector('#btnEdit').addEventListener('click', function() {
 
         // Form Input
         let noteTitle = document.querySelector('#noteTitle');
         let noteContent = document.querySelector('#noteContent');
 
-        // Validasi Form
+        // Validasi Input Form
         if ( validationInput('noteTitle', 'noteContent') )
         {
+            noteContent.innerHTML = document.querySelector('iframe').contentDocument.body.outerHTML
             Note.updateNote(note.row_id, noteTitle.value, noteContent.value, note.created_at)
             alertMessage('success', 'Berhasil diubah');
             return redirectToHome()
@@ -107,7 +131,18 @@ const editNote = function() {
         redirectToHome()
     })
 
-    CKEDITOR.replace( 'noteContent' )
+    /** 
+     * Inisialisasi Teks Editor
+     * ketika kondisi halaman dari kontainer telah selesai di load
+    */
+    const editorText = CKEDITOR.replace( 'noteContent' )
+    const contentEditor = setInterval(() => {
+        if ( editorText.status == 'ready' )
+        {
+            loadContentEditor()
+            clearInterval(contentEditor)
+        }
+    }, 200)
 }
 
 /** 
@@ -134,36 +169,43 @@ btnCreateNote.addEventListener('click', function() {
         <div id="noteContentMessage"></div>
     </div>
 
-    <button class="capitalize btn btn-primary bg-sky-400 hover:bg-sky-500 border-0 border-transparent text-lg" id="btnSave">Simpan catatan</button>
+    <button class="capitalize btn btn-primary bg-sky-400 hover:bg-sky-500 border-0 border-transparent text-lg" id="btnSave">Simpan</button>
     `
 
     // Injeksi Halaman Membuat catatan
     containerContent.innerHTML = createNotePage;
 
-    const btnSave = document.querySelector('#btnSave');
-    btnSave.addEventListener('click', function() {
+    document.querySelector('#btnSave').addEventListener('click', function() {
+
         // Form Input
         let noteTitle = document.querySelector('#noteTitle');
         let noteContent = document.querySelector('#noteContent');
 
         // Validasi Form
-
         if ( validationInput('noteTitle', 'noteContent') )
         {
+            noteContent.innerHTML = document.querySelector('iframe').contentDocument.body.outerHTML
             Note.insertNote(noteTitle.value, noteContent.value)
             alertMessage('success', 'Catatan Berhasil ditambahkan');
             return redirectToHome()
+        } else {
+            alertMessage('danger', 'Gagal disimpan, Mohon periksa semua kolom');
         }
 
     })
     
-    CKEDITOR.replace( 'noteContent' )
-    setTimeout(() => {
-        document.querySelector('iframe').contentDocument.addEventListener('keyup', function() {
-            noteContent.innerHTML = document.querySelector('iframe').contentDocument.body.outerHTML;
-        })
-    }, 1500)
-
+    /** 
+     * Inisialisasi Teks Editor
+     * ketika kondisi halaman dari kontainer telah selesai di load
+    */
+    const editorText = CKEDITOR.replace( 'noteContent' )
+    const contentEditor = setInterval(() => {
+        if ( editorText.status == 'ready' )
+        {
+            loadContentEditor()
+            clearInterval(contentEditor)
+        }
+    }, 200)
 });
 
 /** 
@@ -176,6 +218,9 @@ document.querySelector('#settings').addEventListener('click', function() {
     // Tambahkan navigasi aktif pada menu
     this.classList.add('bg-sky-500', 'text-white')
 
+    /** 
+     * Injeksi halaman settings
+    */
     const settingsPage = `
     <div class="mb-3">
         <label for="" class="font-xl">Tema : </label>
@@ -197,6 +242,11 @@ document.querySelector('#settings').addEventListener('click', function() {
     `
     containerContent.innerHTML = settingsPage;
 
+
+    /** 
+     * Mengubah tema aplikasi
+     * ubah tema dan menyimpan prefrensi tema yang telah dipilih
+    */
     document.querySelector('#settingsTheme').addEventListener('change', function() {
         document.querySelector('#htmlTheme').setAttribute('data-theme', this.value)
         localStorage.setItem('theme', `${this.value}`);
@@ -208,29 +258,37 @@ document.querySelector('#settings').addEventListener('click', function() {
  * Halaman:  Tentang
 */
 document.querySelector('#about').addEventListener('click', function() {
+
     // Reset Menu
     resetActiveMenu('bg-sky-500')
 
     // Tambahkan navigasi aktif pada menu
     this.classList.add('bg-sky-500', 'text-white')
 
+    // Injeksi Halaman About
     const aboutPage = `
     <ul>
-        <li>Author: Febry Billiyagi (@billiyagi)</li>
+        <li>Author: Febry Billiyagi <a href="https://github.com/billiyagi" class="underline">(@billiyagi)</a></li>
         <li>Tentang: Aplikasi Catatan simpel, cepat dan ringan</li>
         <li>Stack: Vanilla JavaScript, TailwindCSS, DaisyUI</li>
-        <li>Version: 0.1 (Beta)</li>
+        <li>Version: 0.2 (Beta)</li>
     </ul>
     `
     containerContent.innerHTML = aboutPage;
 })
 
-// Function
+
+/** 
+ * Fungsi tambahan yang dibutuhkan oleh Aplikasi
+*/
+
+// Reset kondisi aktif pada salah satu menu
 const resetActiveMenu = (activeClass) => {
     const menu = document.querySelectorAll('.menu li');
     return menu.forEach(menu => menu.classList.remove(activeClass, 'text-white'));
 }
 
+// Menampilkan pesan feedback(umpan balik) kepada pengguna
 const alertMessage = (type, message) => {
     if ( type == 'success' )
     {
@@ -246,8 +304,10 @@ const alertMessage = (type, message) => {
     }
 }
 
+// Alihkan ke halaman Utama
 const redirectToHome = () => document.getElementById('allNote').click();
 
+// Validasi input pada form
 const validationInput = (...inputFormId) => {
     let resultValidation = [];
 
@@ -264,21 +324,19 @@ const validationInput = (...inputFormId) => {
             resultValidation.push(true);
         }
     }
-
-
     return resultValidation.every(element => element == true)
 }
 
-const confirmDelete = () => {
-    const confirmModal = `
-    
-    `
-    document.querySelector('.container').innerHTML += confirmModal
-
-    document.querySelector('#deleteBtn').addEventListener('click', function() {
-        return true;
+// Melacak perubahan pada editor dan melakukan injeksi pada kolom textarea
+const loadContentEditor = () => {
+    document.querySelector('iframe').contentDocument.addEventListener('keypress', function() {
+        noteContent.innerHTML = document.querySelector('iframe').contentDocument.body.outerHTML;
     })
 }
 
+/** 
+ * Ketika aplikasi baru di buka 
+ * aplikasi akan secara otomatsi mengarahkan ke halaman utama
+*/
 btnAllNote.click();
 
